@@ -99,7 +99,7 @@ def split_command_segments(command: str) -> list[str]:
                     current = []
                 i += 2
                 continue
-            elif c == "|" and not remaining.startswith("|"):
+            elif c == "|" and not remaining.startswith("||"):
                 if current:
                     segments.append("".join(current).strip())
                     current = []
@@ -163,6 +163,10 @@ def extract_executable(segment: str) -> str | None:
 
         # Skip flags for wrappers (e.g., sudo -u user)
         if token.startswith("-"):
+            continue
+
+        # Skip variable assignments (e.g., env VAR=1 python)
+        if re.match(r'^[A-Za-z_][A-Za-z0-9_]*=', token):
             continue
 
         # Found a non-wrapper, non-flag token

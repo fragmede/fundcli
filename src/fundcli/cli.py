@@ -419,12 +419,15 @@ def stats():
 
     stats = get_history_stats(db_path)
 
+    oldest_str = stats['oldest'].strftime('%Y-%m-%d %H:%M:%S') if stats['oldest'] else 'N/A'
+    newest_str = stats['newest'].strftime('%Y-%m-%d %H:%M:%S') if stats['newest'] else 'N/A'
+
     console.print(Panel(
         f"[bold]Atuin Database Statistics[/bold]\n\n"
         f"Path: {db_path}\n"
         f"Total commands: {stats['total_commands']:,}\n"
-        f"Oldest: {stats['oldest']:%Y-%m-%d %H:%M:%S if stats['oldest'] else 'N/A'}\n"
-        f"Newest: {stats['newest']:%Y-%m-%d %H:%M:%S if stats['newest'] else 'N/A'}",
+        f"Oldest: {oldest_str}\n"
+        f"Newest: {newest_str}",
         box=box.ROUNDED,
     ))
 

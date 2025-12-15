@@ -12,6 +12,43 @@
 # website = "https://..."  # Optional
 
 # ============================================================================
+# Core Unix Utilities
+# ============================================================================
+
+[coreutils]
+name = "GNU Coreutils"
+description = "Core Unix utilities (ls, cat, cp, mv, rm, etc.)"
+executables = [
+    "ls", "cat", "cp", "mv", "rm", "mkdir", "rmdir", "touch",
+    "head", "tail", "wc", "sort", "uniq", "cut", "paste", "join",
+    "tr", "tee", "split", "csplit", "shuf", "comm", "diff", "diff3",
+    "cmp", "patch", "chmod", "chown", "chgrp", "ln", "readlink",
+    "stat", "df", "du", "dd", "sync", "basename", "dirname",
+    "realpath", "mktemp", "date", "sleep", "timeout", "yes",
+    "seq", "factor", "expr", "test", "true", "false", "env",
+    "printenv", "id", "whoami", "groups", "users", "who", "hostname",
+    "uname", "arch", "nproc", "uptime", "kill", "nice", "nohup"
+]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/coreutils/"
+
+[less]
+name = "less"
+description = "Terminal pager program"
+executables = ["less", "lesskey", "lesspipe"]
+donation_urls = []
+website = "https://greenwoodsoftware.com/less/"
+
+[more]
+name = "util-linux"
+description = "Linux system utilities"
+executables = ["more", "mount", "umount", "fdisk", "mkfs", "fsck", "lsblk", "blkid"]
+donation_urls = []
+website = "https://github.com/util-linux/util-linux"
+
+# ============================================================================
 # Version Control
 # ============================================================================
 
@@ -203,6 +240,15 @@ description = "Network scanner"
 executables = ["nmap", "ncat", "ndiff", "nping"]
 donation_urls = []
 website = "https://nmap.org"
+
+[inetutils]
+name = "GNU Inetutils"
+description = "Network utilities (ping, traceroute, ftp, etc.)"
+executables = ["ping", "ping6", "traceroute", "ftp", "telnet", "rsh", "rlogin", "rcp", "tftp"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/inetutils/"
 
 # ============================================================================
 # Containers & Virtualization
@@ -427,6 +473,22 @@ donation_urls = [
     { platform = "github_sponsors", url = "https://github.com/sponsors/sharkdp" },
 ]
 github = "sharkdp/fd"
+
+[ag]
+name = "The Silver Searcher"
+description = "Fast code search tool"
+executables = ["ag"]
+donation_urls = []
+github = "ggreer/the_silver_searcher"
+
+[find]
+name = "GNU Findutils"
+description = "Find files and operate on them"
+executables = ["find", "xargs", "locate", "updatedb"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/findutils/"
 
 [fzf]
 name = "fzf"
