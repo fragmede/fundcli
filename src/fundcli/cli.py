@@ -432,5 +432,129 @@ def stats():
     ))
 
 
+@app.command()
+def donate(
+    amount: float = typer.Option(
+        ...,
+        "--amount", "-a",
+        help="Total donation amount in USD",
+    ),
+    period: str = typer.Option(
+        "month",
+        "--period", "-p",
+        help="Time period: day, week, month, year, all",
+    ),
+    max_projects: int = typer.Option(
+        10,
+        "--max-projects", "-n",
+        help="Maximum number of projects",
+    ),
+    output_file: str = typer.Option(
+        None,
+        "--output", "-o",
+        help="Output file for report (html or md extension)",
+    ),
+    open_links: bool = typer.Option(
+        False,
+        "--open",
+        help="Open donation links in browser",
+    ),
+    hostname: str = typer.Option(
+        None,
+        "--hostname", "-H",
+        help="Filter by hostname",
+    ),
+):
+    """Generate donation links and reports."""
+    from fundcli.integrations import (
+        generate_donation_links,
+        generate_markdown_report,
+        generate_html_report,
+    )
+    import webbrowser
+
+    config = load_config()
+
+    try:
+        time_period = TimePeriod(period)
+    except ValueError:
+        console.print(f"[red]Invalid period: {period}[/red]")
+        raise typer.Exit(1)
+
+    mapper = create_mapper()
+
+    # Apply custom mappings
+    for exe, project_id in config.custom_mappings.items():
+        mapper.add_custom_mapping(exe, project_id)
+
+    with console.status("Analyzing command history..."):
+        analysis = analyze_usage(
+            mapper=mapper,
+            period=time_period,
+            hostname=hostname,
+            include_builtins=config.analysis.include_builtins,
+            db_path=config.database.path if config.database.path.exists() else None,
+        )
+
+    if not analysis.project_stats:
+        console.print("[yellow]No known projects found in command history.[/yellow]")
+        raise typer.Exit(0)
+
+    distribution = calculate_distribution(
+        analysis=analysis,
+        total_amount=Decimal(str(amount)),
+        min_amount=Decimal(str(config.donation.min_per_project)),
+        max_projects=max_projects,
+    )
+
+    # Generate links
+    links = generate_donation_links(distribution)
+
+    if not links:
+        console.print("[yellow]No donation links available for recommended projects.[/yellow]")
+        raise typer.Exit(0)
+
+    # Output to file if requested
+    if output_file:
+        if output_file.endswith(".html"):
+            content = generate_html_report(distribution)
+        else:
+            content = generate_markdown_report(distribution)
+
+        Path(output_file).write_text(content)
+        console.print(f"[green]Report saved to {output_file}[/green]")
+
+    # Display links
+    console.print(Panel(
+        f"[bold]Donation Links[/bold] (${amount:.2f} total)\n"
+        f"Click links to donate. ✓ = amount pre-filled",
+        title="fundcli donate",
+        box=box.ROUNDED,
+    ))
+
+    table = Table(box=box.SIMPLE)
+    table.add_column("Project", style="cyan")
+    table.add_column("Amount", justify="right", style="green")
+    table.add_column("Platform")
+    table.add_column("Link", style="blue")
+
+    for link in links:
+        prefill = " ✓" if link.is_prefilled else ""
+        table.add_row(
+            link.project_name,
+            f"${link.amount}",
+            f"{link.platform}{prefill}",
+            link.url,
+        )
+
+    console.print(table)
+
+    # Open links in browser if requested
+    if open_links:
+        console.print("\n[dim]Opening donation links in browser...[/dim]")
+        for link in links:
+            webbrowser.open(link.url)
+
+
 if __name__ == "__main__":
     app()

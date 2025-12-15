@@ -82,6 +82,22 @@ fundcli config --show      # Show current config
 fundcli config --path      # Show config file path
 ```
 
+### `fundcli donate`
+
+Generate donation links with pre-filled amounts where supported.
+
+```bash
+fundcli donate --amount 10            # Generate links for $10 total
+fundcli donate -a 20 -o report.html   # Save HTML report
+fundcli donate -a 10 -o report.md     # Save Markdown report
+fundcli donate -a 10 --open           # Open links in browser
+```
+
+**Note:** Most donation platforms (GitHub Sponsors, Open Collective) don't support fully automated one-time donations. This command generates pre-filled URLs where possible:
+- **Open Collective**: Amount is pre-filled in the donation form ✓
+- **GitHub Sponsors**: Links to sponsor page (select amount manually)
+- **Direct**: Links to project donation page
+
 ### `fundcli stats`
 
 Show database statistics.
