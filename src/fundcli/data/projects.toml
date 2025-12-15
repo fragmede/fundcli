@@ -1,0 +1,837 @@
+# Curated database of open source projects and their donation URLs
+# Format:
+# [project_id]
+# name = "Display Name"
+# description = "Short description"
+# executables = ["exe1", "exe2"]  # All executables that map to this project
+# donation_urls = [
+#   { platform = "github_sponsors", url = "https://..." },
+#   { platform = "opencollective", url = "https://..." },
+# ]
+# github = "owner/repo"  # Optional
+# website = "https://..."  # Optional
+
+# ============================================================================
+# Version Control
+# ============================================================================
+
+[git]
+name = "Git"
+description = "Distributed version control system"
+executables = ["git", "git-lfs", "git-annex", "git-crypt"]
+donation_urls = [
+    { platform = "sfc", url = "https://sfconservancy.org/donate/" },
+]
+github = "git/git"
+website = "https://git-scm.com"
+
+[gh]
+name = "GitHub CLI"
+description = "GitHub's official command line tool"
+executables = ["gh"]
+donation_urls = []
+github = "cli/cli"
+website = "https://cli.github.com"
+
+[mercurial]
+name = "Mercurial"
+description = "Distributed version control system"
+executables = ["hg"]
+donation_urls = [
+    { platform = "direct", url = "https://www.mercurial-scm.org/donate" },
+]
+website = "https://www.mercurial-scm.org"
+
+# ============================================================================
+# Programming Languages & Runtimes
+# ============================================================================
+
+[python]
+name = "Python Software Foundation"
+description = "Python programming language"
+executables = ["python", "python3", "python2", "pip", "pip3", "pipx", "pipenv", "poetry", "uv"]
+donation_urls = [
+    { platform = "direct", url = "https://www.python.org/psf/donations/" },
+]
+github = "python/cpython"
+website = "https://python.org"
+
+[node]
+name = "OpenJS Foundation (Node.js)"
+description = "JavaScript runtime"
+executables = ["node", "npm", "npx", "corepack"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/nodejs" },
+]
+github = "nodejs/node"
+website = "https://nodejs.org"
+
+[deno]
+name = "Deno"
+description = "JavaScript/TypeScript runtime"
+executables = ["deno"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/denoland" },
+]
+github = "denoland/deno"
+website = "https://deno.land"
+
+[bun]
+name = "Bun"
+description = "Fast JavaScript runtime"
+executables = ["bun", "bunx"]
+donation_urls = []
+github = "oven-sh/bun"
+website = "https://bun.sh"
+
+[rust]
+name = "Rust Foundation"
+description = "Rust programming language"
+executables = ["rustc", "cargo", "rustup", "rustfmt", "clippy"]
+donation_urls = [
+    { platform = "direct", url = "https://foundation.rust-lang.org/donate/" },
+]
+github = "rust-lang/rust"
+website = "https://rust-lang.org"
+
+[go]
+name = "Go"
+description = "Go programming language"
+executables = ["go", "gofmt"]
+donation_urls = []
+github = "golang/go"
+website = "https://go.dev"
+
+[ruby]
+name = "Ruby"
+description = "Ruby programming language"
+executables = ["ruby", "gem", "bundle", "bundler", "rake", "irb"]
+donation_urls = [
+    { platform = "direct", url = "https://www.ruby-lang.org/en/about/donate/" },
+]
+github = "ruby/ruby"
+website = "https://ruby-lang.org"
+
+[perl]
+name = "Perl Foundation"
+description = "Perl programming language"
+executables = ["perl", "cpan", "cpanm"]
+donation_urls = [
+    { platform = "direct", url = "https://www.perlfoundation.org/donate.html" },
+]
+website = "https://perl.org"
+
+[lua]
+name = "Lua"
+description = "Lua scripting language"
+executables = ["lua", "luac", "luarocks"]
+donation_urls = []
+website = "https://lua.org"
+
+[java]
+name = "Eclipse Adoptium"
+description = "OpenJDK distribution"
+executables = ["java", "javac", "jar", "jshell"]
+donation_urls = [
+    { platform = "direct", url = "https://adoptium.net/donate/" },
+]
+website = "https://adoptium.net"
+
+[php]
+name = "PHP Foundation"
+description = "PHP programming language"
+executables = ["php", "composer"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/phpfoundation" },
+]
+github = "php/php-src"
+website = "https://php.net"
+
+# ============================================================================
+# Network Tools
+# ============================================================================
+
+[curl]
+name = "curl"
+description = "Command line tool for transferring data with URLs"
+executables = ["curl"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/bagder" },
+    { platform = "opencollective", url = "https://opencollective.com/curl" },
+]
+github = "curl/curl"
+website = "https://curl.se"
+
+[wget]
+name = "GNU Wget"
+description = "Network downloader"
+executables = ["wget", "wget2"]
+donation_urls = [
+    { platform = "direct", url = "https://www.gnu.org/software/wget/" },
+]
+website = "https://www.gnu.org/software/wget/"
+
+[httpie]
+name = "HTTPie"
+description = "Human-friendly HTTP client"
+executables = ["http", "https", "httpie"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/httpie" },
+]
+github = "httpie/cli"
+website = "https://httpie.io"
+
+[ssh]
+name = "OpenSSH"
+description = "Secure shell and related tools"
+executables = ["ssh", "scp", "sftp", "ssh-keygen", "ssh-agent", "ssh-add"]
+donation_urls = [
+    { platform = "direct", url = "https://www.openssh.com/donations.html" },
+]
+website = "https://openssh.com"
+
+[rsync]
+name = "rsync"
+description = "Fast incremental file transfer"
+executables = ["rsync"]
+donation_urls = []
+website = "https://rsync.samba.org"
+
+[nmap]
+name = "Nmap"
+description = "Network scanner"
+executables = ["nmap", "ncat", "ndiff", "nping"]
+donation_urls = []
+website = "https://nmap.org"
+
+# ============================================================================
+# Containers & Virtualization
+# ============================================================================
+
+[docker]
+name = "Docker"
+description = "Container platform"
+executables = ["docker", "docker-compose"]
+donation_urls = []
+github = "docker/cli"
+website = "https://docker.com"
+
+[podman]
+name = "Podman"
+description = "Daemonless container engine"
+executables = ["podman", "podman-compose", "buildah", "skopeo"]
+donation_urls = []
+github = "containers/podman"
+website = "https://podman.io"
+
+[kubernetes]
+name = "Kubernetes (CNCF)"
+description = "Container orchestration"
+executables = ["kubectl", "kubeadm", "kubelet", "minikube", "kind"]
+donation_urls = [
+    { platform = "direct", url = "https://www.cncf.io/about/join/" },
+]
+github = "kubernetes/kubernetes"
+website = "https://kubernetes.io"
+
+[helm]
+name = "Helm"
+description = "Kubernetes package manager"
+executables = ["helm"]
+donation_urls = []
+github = "helm/helm"
+website = "https://helm.sh"
+
+[vagrant]
+name = "Vagrant"
+description = "Development environments"
+executables = ["vagrant"]
+donation_urls = []
+github = "hashicorp/vagrant"
+website = "https://vagrantup.com"
+
+[terraform]
+name = "Terraform"
+description = "Infrastructure as Code"
+executables = ["terraform", "tofu"]
+donation_urls = []
+github = "hashicorp/terraform"
+website = "https://terraform.io"
+
+# ============================================================================
+# Editors & IDEs
+# ============================================================================
+
+[vim]
+name = "Vim"
+description = "Vi IMproved text editor"
+executables = ["vim", "vi", "vimdiff", "view", "gvim"]
+donation_urls = [
+    { platform = "direct", url = "https://www.vim.org/sponsor/index.php" },
+]
+github = "vim/vim"
+website = "https://vim.org"
+
+[neovim]
+name = "Neovim"
+description = "Hyperextensible Vim-based text editor"
+executables = ["nvim"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/neovim" },
+    { platform = "github_sponsors", url = "https://github.com/sponsors/neovim" },
+]
+github = "neovim/neovim"
+website = "https://neovim.io"
+
+[emacs]
+name = "GNU Emacs"
+description = "Extensible text editor"
+executables = ["emacs", "emacsclient"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/emacs/"
+
+[nano]
+name = "GNU nano"
+description = "Simple text editor"
+executables = ["nano"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://nano-editor.org"
+
+[code]
+name = "VS Code (OSS)"
+description = "Visual Studio Code"
+executables = ["code", "codium"]
+donation_urls = []
+github = "microsoft/vscode"
+website = "https://code.visualstudio.com"
+
+[helix]
+name = "Helix"
+description = "Post-modern modal text editor"
+executables = ["hx", "helix"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/helix-editor" },
+]
+github = "helix-editor/helix"
+website = "https://helix-editor.com"
+
+# ============================================================================
+# Shell & Terminal Tools
+# ============================================================================
+
+[bash]
+name = "GNU Bash"
+description = "Bourne Again SHell"
+executables = ["bash"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/bash/"
+
+[zsh]
+name = "Zsh"
+description = "Z shell"
+executables = ["zsh"]
+donation_urls = []
+website = "https://zsh.org"
+
+[fish]
+name = "fish"
+description = "Friendly interactive shell"
+executables = ["fish"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/fish-shell" },
+]
+github = "fish-shell/fish-shell"
+website = "https://fishshell.com"
+
+[tmux]
+name = "tmux"
+description = "Terminal multiplexer"
+executables = ["tmux"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/nicm" },
+]
+github = "tmux/tmux"
+website = "https://github.com/tmux/tmux"
+
+[screen]
+name = "GNU Screen"
+description = "Terminal multiplexer"
+executables = ["screen"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/screen/"
+
+[atuin]
+name = "Atuin"
+description = "Shell history sync and search"
+executables = ["atuin"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/ellie" },
+]
+github = "atuinsh/atuin"
+website = "https://atuin.sh"
+
+[starship]
+name = "Starship"
+description = "Cross-shell prompt"
+executables = ["starship"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/starship" },
+]
+github = "starship/starship"
+website = "https://starship.rs"
+
+[zoxide]
+name = "zoxide"
+description = "Smarter cd command"
+executables = ["zoxide", "z"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/ajeetdsouza" },
+]
+github = "ajeetdsouza/zoxide"
+
+# ============================================================================
+# File & Text Processing
+# ============================================================================
+
+[grep]
+name = "GNU Grep"
+description = "Pattern matching"
+executables = ["grep", "egrep", "fgrep"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/grep/"
+
+[ripgrep]
+name = "ripgrep"
+description = "Fast grep alternative"
+executables = ["rg"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/BurntSushi" },
+]
+github = "BurntSushi/ripgrep"
+
+[fd]
+name = "fd"
+description = "Fast find alternative"
+executables = ["fd", "fdfind"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/sharkdp" },
+]
+github = "sharkdp/fd"
+
+[fzf]
+name = "fzf"
+description = "Fuzzy finder"
+executables = ["fzf"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/junegunn" },
+]
+github = "junegunn/fzf"
+
+[jq]
+name = "jq"
+description = "JSON processor"
+executables = ["jq"]
+donation_urls = []
+github = "jqlang/jq"
+website = "https://jqlang.github.io/jq/"
+
+[yq]
+name = "yq"
+description = "YAML/JSON processor"
+executables = ["yq"]
+donation_urls = []
+github = "mikefarah/yq"
+
+[sed]
+name = "GNU sed"
+description = "Stream editor"
+executables = ["sed", "gsed"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/sed/"
+
+[awk]
+name = "GNU awk"
+description = "Pattern scanning and processing"
+executables = ["awk", "gawk", "mawk", "nawk"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/gawk/"
+
+[bat]
+name = "bat"
+description = "Cat clone with syntax highlighting"
+executables = ["bat", "batcat"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/sharkdp" },
+]
+github = "sharkdp/bat"
+
+[eza]
+name = "eza"
+description = "Modern ls replacement"
+executables = ["eza", "exa"]
+donation_urls = []
+github = "eza-community/eza"
+
+[tree]
+name = "tree"
+description = "Directory listing"
+executables = ["tree"]
+donation_urls = []
+website = "https://oldmanprogrammer.net/source.php?dir=projects/tree"
+
+[dust]
+name = "dust"
+description = "Intuitive du alternative"
+executables = ["dust"]
+donation_urls = []
+github = "bootandy/dust"
+
+[duf]
+name = "duf"
+description = "Disk usage utility"
+executables = ["duf"]
+donation_urls = []
+github = "muesli/duf"
+
+# ============================================================================
+# Cryptography & Security
+# ============================================================================
+
+[gnupg]
+name = "GnuPG"
+description = "GNU Privacy Guard"
+executables = ["gpg", "gpg2", "gpgv", "gpg-agent"]
+donation_urls = [
+    { platform = "direct", url = "https://gnupg.org/donate/" },
+]
+website = "https://gnupg.org"
+
+[openssl]
+name = "OpenSSL"
+description = "TLS/SSL toolkit"
+executables = ["openssl"]
+donation_urls = [
+    { platform = "direct", url = "https://www.openssl.org/support/donations.html" },
+]
+github = "openssl/openssl"
+website = "https://openssl.org"
+
+[age]
+name = "age"
+description = "Simple file encryption"
+executables = ["age", "age-keygen"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/FiloSottile" },
+]
+github = "FiloSottile/age"
+
+[pass]
+name = "pass"
+description = "Unix password manager"
+executables = ["pass"]
+donation_urls = []
+website = "https://passwordstore.org"
+
+# ============================================================================
+# Package Managers
+# ============================================================================
+
+[homebrew]
+name = "Homebrew"
+description = "macOS/Linux package manager"
+executables = ["brew"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/Homebrew" },
+    { platform = "opencollective", url = "https://opencollective.com/homebrew" },
+]
+github = "Homebrew/brew"
+website = "https://brew.sh"
+
+[apt]
+name = "APT"
+description = "Debian package manager"
+executables = ["apt", "apt-get", "apt-cache", "dpkg"]
+donation_urls = [
+    { platform = "direct", url = "https://www.debian.org/donations" },
+]
+website = "https://wiki.debian.org/Apt"
+
+[dnf]
+name = "DNF"
+description = "Fedora package manager"
+executables = ["dnf", "yum", "rpm"]
+donation_urls = [
+    { platform = "direct", url = "https://getfedora.org/en/sponsors/" },
+]
+github = "rpm-software-management/dnf"
+
+[pacman]
+name = "pacman"
+description = "Arch Linux package manager"
+executables = ["pacman", "yay", "paru"]
+donation_urls = [
+    { platform = "direct", url = "https://archlinux.org/donate/" },
+]
+website = "https://archlinux.org/pacman/"
+
+[nix]
+name = "Nix"
+description = "Reproducible package manager"
+executables = ["nix", "nix-env", "nix-shell", "nix-build"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/nixos" },
+]
+github = "NixOS/nix"
+website = "https://nixos.org"
+
+# ============================================================================
+# Build Tools
+# ============================================================================
+
+[make]
+name = "GNU Make"
+description = "Build automation"
+executables = ["make", "gmake"]
+donation_urls = [
+    { platform = "direct", url = "https://my.fsf.org/donate" },
+]
+website = "https://gnu.org/software/make/"
+
+[cmake]
+name = "CMake"
+description = "Cross-platform build system"
+executables = ["cmake", "ctest", "cpack"]
+donation_urls = []
+github = "Kitware/CMake"
+website = "https://cmake.org"
+
+[ninja]
+name = "Ninja"
+description = "Small build system"
+executables = ["ninja"]
+donation_urls = []
+github = "ninja-build/ninja"
+website = "https://ninja-build.org"
+
+[meson]
+name = "Meson"
+description = "Build system"
+executables = ["meson"]
+donation_urls = []
+github = "mesonbuild/meson"
+website = "https://mesonbuild.com"
+
+# ============================================================================
+# Database Tools
+# ============================================================================
+
+[sqlite]
+name = "SQLite"
+description = "Embedded SQL database"
+executables = ["sqlite3"]
+donation_urls = [
+    { platform = "direct", url = "https://sqlite.org/consortium.html" },
+]
+website = "https://sqlite.org"
+
+[postgresql]
+name = "PostgreSQL"
+description = "Advanced open source database"
+executables = ["psql", "pg_dump", "pg_restore", "createdb", "dropdb"]
+donation_urls = [
+    { platform = "direct", url = "https://www.postgresql.org/about/donate/" },
+]
+website = "https://postgresql.org"
+
+[mysql]
+name = "MySQL"
+description = "MySQL database"
+executables = ["mysql", "mysqldump", "mysqladmin"]
+donation_urls = []
+website = "https://mysql.com"
+
+[redis]
+name = "Redis"
+description = "In-memory data store"
+executables = ["redis-cli", "redis-server"]
+donation_urls = []
+github = "redis/redis"
+website = "https://redis.io"
+
+# ============================================================================
+# Media & Documents
+# ============================================================================
+
+[ffmpeg]
+name = "FFmpeg"
+description = "Multimedia framework"
+executables = ["ffmpeg", "ffprobe", "ffplay"]
+donation_urls = [
+    { platform = "direct", url = "https://ffmpeg.org/donations.html" },
+]
+website = "https://ffmpeg.org"
+
+[imagemagick]
+name = "ImageMagick"
+description = "Image manipulation"
+executables = ["convert", "identify", "mogrify", "composite", "magick"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/ImageMagick" },
+]
+github = "ImageMagick/ImageMagick"
+website = "https://imagemagick.org"
+
+[pandoc]
+name = "Pandoc"
+description = "Universal document converter"
+executables = ["pandoc"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/jgm" },
+]
+github = "jgm/pandoc"
+website = "https://pandoc.org"
+
+[latex]
+name = "TeX Live"
+description = "TeX typesetting system"
+executables = ["latex", "pdflatex", "xelatex", "lualatex", "bibtex", "tlmgr"]
+donation_urls = [
+    { platform = "direct", url = "https://tug.org/donate.html" },
+]
+website = "https://tug.org/texlive/"
+
+# ============================================================================
+# Cloud & Infrastructure
+# ============================================================================
+
+[aws]
+name = "AWS CLI"
+description = "Amazon Web Services CLI"
+executables = ["aws"]
+donation_urls = []
+github = "aws/aws-cli"
+
+[gcloud]
+name = "Google Cloud SDK"
+description = "Google Cloud CLI"
+executables = ["gcloud", "gsutil", "bq"]
+donation_urls = []
+
+[azure]
+name = "Azure CLI"
+description = "Microsoft Azure CLI"
+executables = ["az"]
+donation_urls = []
+github = "Azure/azure-cli"
+
+# ============================================================================
+# Misc Developer Tools
+# ============================================================================
+
+[just]
+name = "just"
+description = "Command runner"
+executables = ["just"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/casey" },
+]
+github = "casey/just"
+
+[task]
+name = "Task"
+description = "Task runner / simpler Make alternative"
+executables = ["task"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/task" },
+]
+github = "go-task/task"
+website = "https://taskfile.dev"
+
+[direnv]
+name = "direnv"
+description = "Environment variable management"
+executables = ["direnv"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/zimbatm" },
+]
+github = "direnv/direnv"
+website = "https://direnv.net"
+
+[asdf]
+name = "asdf"
+description = "Runtime version manager"
+executables = ["asdf"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/asdf-vm" },
+]
+github = "asdf-vm/asdf"
+website = "https://asdf-vm.com"
+
+[mise]
+name = "mise"
+description = "Dev environment setup tool"
+executables = ["mise", "rtx"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/jdx" },
+]
+github = "jdx/mise"
+website = "https://mise.jdx.dev"
+
+[htop]
+name = "htop"
+description = "Interactive process viewer"
+executables = ["htop"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/htop-dev" },
+]
+github = "htop-dev/htop"
+website = "https://htop.dev"
+
+[btop]
+name = "btop"
+description = "Resource monitor"
+executables = ["btop", "bpytop", "bashtop"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/aristocratos" },
+]
+github = "aristocratos/btop"
+
+[hyperfine]
+name = "hyperfine"
+description = "Command-line benchmarking tool"
+executables = ["hyperfine"]
+donation_urls = [
+    { platform = "github_sponsors", url = "https://github.com/sponsors/sharkdp" },
+]
+github = "sharkdp/hyperfine"
+
+[tokei]
+name = "tokei"
+description = "Code statistics"
+executables = ["tokei"]
+donation_urls = []
+github = "XAMPPRocky/tokei"
+
+[tldr]
+name = "tldr"
+description = "Simplified man pages"
+executables = ["tldr"]
+donation_urls = [
+    { platform = "opencollective", url = "https://opencollective.com/tldr-pages" },
+]
+github = "tldr-pages/tldr"
+website = "https://tldr.sh"
