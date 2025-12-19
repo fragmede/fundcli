@@ -133,6 +133,57 @@ def query_history(
         conn.close()
 
 
+def get_exit_codes_for_executable(
+    executable: str,
+    db_path: Path | None = None,
+) -> list[int]:
+    """
+    Get all exit codes for commands starting with a given executable.
+
+    Args:
+        executable: The executable name to search for
+        db_path: Path to history.db
+
+    Returns:
+        List of exit codes for matching commands
+    """
+    if db_path is None:
+        db_path = get_default_db_path()
+
+    if not db_path.exists():
+        return []
+
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+
+    try:
+        # Match commands that start with the executable (with word boundary)
+        # This handles "pbapste", "pbapste foo", etc.
+        cursor = conn.execute(
+            """
+            SELECT exit FROM history
+            WHERE deleted_at IS NULL
+            AND (command = ? OR command LIKE ? || ' %')
+            """,
+            (executable, executable)
+        )
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def is_command_not_found(executable: str, db_path: Path | None = None) -> bool:
+    """
+    Check if an executable consistently fails with 'command not found' (exit 127).
+
+    Returns True if ALL invocations of this command resulted in exit code 127.
+    """
+    exit_codes = get_exit_codes_for_executable(executable, db_path)
+    if not exit_codes:
+        return False
+    # All invocations must be exit 127 (command not found)
+    return all(code == 127 for code in exit_codes)
+
+
 def get_history_stats(db_path: Path | None = None) -> dict:
     """Get basic statistics about the history database."""
     if db_path is None:

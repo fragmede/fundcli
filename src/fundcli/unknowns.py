@@ -163,13 +163,18 @@ def suggest_classification(
     path: str | None,
     file_type: str,
     copyright_line: str | None,
+    is_typo: bool = False,
 ) -> tuple[str, str]:
     """
     Suggest a classification for an executable.
 
     Returns: (classification, reason)
     """
-    # Not found
+    # Typo - command not found in history (exit 127)
+    if is_typo:
+        return ('ignored', 'typo (all invocations returned "command not found")')
+
+    # Not found but not confirmed as typo
     if path is None:
         return ('not_found', 'executable not found in PATH')
 
@@ -200,23 +205,37 @@ def suggest_classification(
     return ('unknown', 'unable to determine classification')
 
 
-def investigate_executable(exe: str) -> InvestigationResult:
+def investigate_executable(exe: str, db_path: Path | None = None) -> InvestigationResult:
     """
     Fully investigate an unknown executable.
 
+    Args:
+        exe: Executable name
+        db_path: Path to Atuin database (for checking exit codes)
+
     Returns InvestigationResult with all gathered info.
     """
+    from fundcli.database import is_command_not_found
+
     path = which_executable(exe)
 
+    # Check if this is a typo (all invocations returned exit 127)
+    is_typo = False
     if path is None:
+        is_typo = is_command_not_found(exe, db_path)
+
+    if path is None:
+        classification, reason = suggest_classification(
+            exe, path, 'not_found', None, is_typo=is_typo
+        )
         return InvestigationResult(
             executable=exe,
             path=None,
             file_type='not_found',
             copyright_line=None,
             help_text=None,
-            suggested_classification='not_found',
-            suggestion_reason='executable not found in PATH',
+            suggested_classification=classification,
+            suggestion_reason=reason,
         )
 
     file_type = get_file_type(path)
@@ -247,6 +266,7 @@ def investigate_and_save(
     exe: str,
     db: LocalDatabase,
     force: bool = False,
+    atuin_db_path: Path | None = None,
 ) -> UnknownExecutable:
     """
     Investigate an executable and save to database.
@@ -255,6 +275,7 @@ def investigate_and_save(
         exe: Executable name
         db: LocalDatabase instance
         force: If True, re-investigate even if cached
+        atuin_db_path: Path to Atuin history.db (for exit code checking)
 
     Returns:
         UnknownExecutable record
@@ -266,7 +287,7 @@ def investigate_and_save(
             return cached
 
     # Investigate
-    result = investigate_executable(exe)
+    result = investigate_executable(exe, atuin_db_path)
 
     # Create record
     unknown = UnknownExecutable(
@@ -291,6 +312,7 @@ def classify_executable(
     db: LocalDatabase,
     project: str | None = None,
     notes: str | None = None,
+    atuin_db_path: Path | None = None,
 ) -> UnknownExecutable:
     """
     Manually classify an executable.
@@ -301,6 +323,7 @@ def classify_executable(
         db: LocalDatabase instance
         project: Suggested project ID for third_party
         notes: User notes
+        atuin_db_path: Path to Atuin history.db (for exit code checking)
 
     Returns:
         Updated UnknownExecutable record
@@ -309,7 +332,7 @@ def classify_executable(
     unknown = db.get_unknown(exe)
     if unknown is None:
         # Investigate first
-        unknown = investigate_and_save(exe, db)
+        unknown = investigate_and_save(exe, db, atuin_db_path=atuin_db_path)
 
     # Update classification
     unknown.classification = classification

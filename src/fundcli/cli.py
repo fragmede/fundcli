@@ -645,8 +645,9 @@ def unknowns_list(
             continue
 
         # Investigate (uses cache unless refresh)
+        atuin_path = config.database.path if config.database.path.exists() else None
         with console.status(f"Investigating {exe}...") if (refresh or first_run) else nullcontext():
-            unknown = investigate_and_save(exe, db, force=refresh)
+            unknown = investigate_and_save(exe, db, force=refresh, atuin_db_path=atuin_path)
 
         # Determine display info
         info = ""
@@ -691,10 +692,12 @@ def unknowns_show(
     from fundcli.local_db import LocalDatabase
     from fundcli.unknowns import investigate_and_save
 
+    config = load_config()
     db = LocalDatabase()
+    atuin_path = config.database.path if config.database.path.exists() else None
 
     with console.status(f"Investigating {name}..."):
-        unknown = investigate_and_save(name, db, force=True)
+        unknown = investigate_and_save(name, db, force=True, atuin_db_path=atuin_path)
 
     console.print(Panel(
         f"[bold]{name}[/bold]",
@@ -750,8 +753,10 @@ def unknowns_classify(
         console.print(f"Valid options: {', '.join(valid_classifications)}")
         raise typer.Exit(1)
 
+    config = load_config()
     db = LocalDatabase()
-    unknown = classify_executable(name, classification, db, project, notes)
+    atuin_path = config.database.path if config.database.path.exists() else None
+    unknown = classify_executable(name, classification, db, project, notes, atuin_db_path=atuin_path)
 
     console.print(f"[green]✓[/green] Classified '{name}' as [yellow]{classification}[/yellow]")
 
