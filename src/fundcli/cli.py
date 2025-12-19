@@ -111,13 +111,41 @@ def analyze(
     table.add_column("%", justify="right")
     table.add_column("Project", style="green")
 
+    # Load unknowns database to show classification info
+    from fundcli.local_db import LocalDatabase
+    unknowns_db = LocalDatabase()
+
     top_exes = get_top_executables(analysis, limit)
     total_exe_count = sum(s.count for _, s in top_exes)
 
     for i, (exe, stats) in enumerate(top_exes, 1):
         pct = (stats.count / analysis.total_commands * 100) if analysis.total_commands > 0 else 0
         project = mapper.get_project_for_executable(exe)
-        project_name = project.name if project else "[dim]unknown[/dim]"
+
+        if project:
+            project_name = project.name
+        else:
+            # Check unknowns database for classification info
+            unknown_info = unknowns_db.get_unknown(exe)
+            if unknown_info and unknown_info.classification:
+                if unknown_info.classification == 'third_party':
+                    # Show copyright holder if available
+                    if unknown_info.copyright_found:
+                        # Extract short name from copyright (e.g., "Anthropic" from "(c) Anthropic PBC...")
+                        copyright_short = unknown_info.copyright_found[:30]
+                        project_name = f"[yellow]{copyright_short}[/yellow]"
+                    else:
+                        project_name = "[yellow]third_party[/yellow]"
+                elif unknown_info.classification == 'system':
+                    project_name = "[blue]system[/blue]"
+                elif unknown_info.classification == 'user':
+                    project_name = "[magenta]user script[/magenta]"
+                elif unknown_info.classification == 'ignored':
+                    project_name = "[dim]ignored[/dim]"
+                else:
+                    project_name = "[dim]unknown[/dim]"
+            else:
+                project_name = "[dim]unknown[/dim]"
 
         table.add_row(
             str(i),
