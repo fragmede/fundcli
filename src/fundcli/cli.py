@@ -163,12 +163,13 @@ def analyze(
 
         db = LocalDatabase()
 
-        # Filter out executables classified as user/system/ignored
+        # Filter out executables that have been classified
         filtered_unknowns = {}
         for exe, count in analysis.unknown_executables.items():
             cached = db.get_unknown(exe)
-            if cached and cached.classification in ('user', 'system', 'ignored'):
-                continue  # Skip classified executables
+            # Skip if classified as anything other than not_found/unknown
+            if cached and cached.classification in ('user', 'system', 'ignored', 'third_party'):
+                continue
             filtered_unknowns[exe] = count
 
         if filtered_unknowns:
