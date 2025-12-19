@@ -129,26 +129,39 @@ def analyze(
 
     console.print(table)
 
-    # Unknown executables
+    # Unknown executables - filter out those already classified
     if show_unknown and analysis.unknown_executables:
-        console.print(f"\n[bold yellow]Unknown Executables[/bold yellow] ({len(analysis.unknown_executables)} total)")
+        from fundcli.local_db import LocalDatabase
 
-        # Show top 10 unknown by count
-        sorted_unknown = sorted(
-            analysis.unknown_executables.items(),
-            key=lambda x: x[1],
-            reverse=True,
-        )[:10]
+        db = LocalDatabase()
 
-        unknown_table = Table(box=box.SIMPLE)
-        unknown_table.add_column("Executable", style="yellow")
-        unknown_table.add_column("Count", justify="right")
+        # Filter out executables classified as user/system/ignored
+        filtered_unknowns = {}
+        for exe, count in analysis.unknown_executables.items():
+            cached = db.get_unknown(exe)
+            if cached and cached.classification in ('user', 'system', 'ignored'):
+                continue  # Skip classified executables
+            filtered_unknowns[exe] = count
 
-        for exe, count in sorted_unknown:
-            unknown_table.add_row(exe, str(count))
+        if filtered_unknowns:
+            console.print(f"\n[bold yellow]Unknown Executables[/bold yellow] ({len(filtered_unknowns)} total)")
 
-        console.print(unknown_table)
-        console.print("\n[dim]Run 'fundcli unknowns' to investigate and classify these executables.[/dim]")
+            # Show top 10 unknown by count
+            sorted_unknown = sorted(
+                filtered_unknowns.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )[:10]
+
+            unknown_table = Table(box=box.SIMPLE)
+            unknown_table.add_column("Executable", style="yellow")
+            unknown_table.add_column("Count", justify="right")
+
+            for exe, count in sorted_unknown:
+                unknown_table.add_row(exe, str(count))
+
+            console.print(unknown_table)
+            console.print("\n[dim]Run 'fundcli unknowns' to investigate and classify these executables.[/dim]")
 
 
 @app.command()
