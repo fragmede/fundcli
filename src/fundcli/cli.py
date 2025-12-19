@@ -556,5 +556,236 @@ def donate(
             webbrowser.open(link.url)
 
 
+# Unknowns subcommand group
+unknowns_app = typer.Typer(
+    name="unknowns",
+    help="Investigate and classify unknown executables.",
+)
+app.add_typer(unknowns_app, name="unknowns")
+
+
+@unknowns_app.callback(invoke_without_command=True)
+def unknowns_list(
+    ctx: typer.Context,
+    refresh: bool = typer.Option(
+        False,
+        "--refresh", "-r",
+        help="Re-investigate all unknowns (bypass cache)",
+    ),
+    period: str = typer.Option(
+        "month",
+        "--period", "-p",
+        help="Time period for finding unknowns: day, week, month, year, all",
+    ),
+):
+    """List and investigate unknown executables."""
+    if ctx.invoked_subcommand is not None:
+        return  # Subcommand will handle it
+
+    from fundcli.local_db import LocalDatabase, get_db_path
+    from fundcli.unknowns import investigate_and_save
+
+    config = load_config()
+    db = LocalDatabase()
+
+    # Check if first run
+    first_run = not db.db_exists() or len(db.list_unknowns()) == 0
+    if first_run:
+        console.print(f"[dim]Created local database at {get_db_path()}[/dim]\n")
+
+    try:
+        time_period = TimePeriod(period)
+    except ValueError:
+        console.print(f"[red]Invalid period: {period}[/red]")
+        raise typer.Exit(1)
+
+    mapper = create_mapper()
+
+    # Get unknowns from analysis
+    with console.status("Analyzing command history..."):
+        analysis = analyze_usage(
+            mapper=mapper,
+            period=time_period,
+            include_builtins=config.analysis.include_builtins,
+            db_path=config.database.path if config.database.path.exists() else None,
+        )
+
+    if not analysis.unknown_executables:
+        console.print("[green]No unknown executables found![/green]")
+        raise typer.Exit(0)
+
+    # Investigate each unknown
+    unknowns_list = sorted(
+        analysis.unknown_executables.items(),
+        key=lambda x: x[1],
+        reverse=True,
+    )
+
+    console.print(Panel(
+        f"[bold]Unknown Executables Investigation[/bold]\n"
+        f"Found {len(unknowns_list)} unknowns in {period} history",
+        title="fundcli unknowns",
+        box=box.ROUNDED,
+    ))
+
+    if refresh or first_run:
+        console.print("[dim]Investigating executables...[/dim]\n")
+
+    table = Table(box=box.SIMPLE)
+    table.add_column("Executable", style="cyan")
+    table.add_column("Count", justify="right")
+    table.add_column("Type")
+    table.add_column("Classification", style="yellow")
+    table.add_column("Info")
+
+    for exe, count in unknowns_list:
+        # Skip if already classified as user/system/ignored
+        cached = db.get_unknown(exe)
+        if cached and cached.classification in ('user', 'system', 'ignored'):
+            continue
+
+        # Investigate (uses cache unless refresh)
+        with console.status(f"Investigating {exe}...") if (refresh or first_run) else nullcontext():
+            unknown = investigate_and_save(exe, db, force=refresh)
+
+        # Determine display info
+        info = ""
+        if unknown.copyright_found:
+            info = unknown.copyright_found[:40] + "..." if len(unknown.copyright_found or "") > 40 else (unknown.copyright_found or "")
+        elif unknown.path:
+            # Show shortened path
+            path = unknown.path
+            home = str(Path.home())
+            if path.startswith(home):
+                path = "~" + path[len(home):]
+            info = path[:40] + "..." if len(path) > 40 else path
+
+        classification = unknown.classification or "unknown"
+        type_str = unknown.file_type or "?"
+
+        table.add_row(
+            exe,
+            str(count),
+            type_str,
+            classification,
+            info,
+        )
+
+    console.print(table)
+
+    console.print("\n[dim]Commands:[/dim]")
+    console.print("  fundcli unknowns [NAME]              - Show details for an executable")
+    console.print("  fundcli unknowns classify NAME TYPE  - Classify an executable")
+    console.print("  fundcli unknowns reset               - Clear the local database")
+
+
+# Need nullcontext for Python 3.11+
+from contextlib import nullcontext
+
+
+@unknowns_app.command("show")
+def unknowns_show(
+    name: str = typer.Argument(..., help="Executable name to investigate"),
+):
+    """Show detailed information about an unknown executable."""
+    from fundcli.local_db import LocalDatabase
+    from fundcli.unknowns import investigate_and_save
+
+    db = LocalDatabase()
+
+    with console.status(f"Investigating {name}..."):
+        unknown = investigate_and_save(name, db, force=True)
+
+    console.print(Panel(
+        f"[bold]{name}[/bold]",
+        title="Executable Details",
+        box=box.ROUNDED,
+    ))
+
+    console.print(f"[bold]Path:[/bold] {unknown.path or 'not found'}")
+    console.print(f"[bold]Type:[/bold] {unknown.file_type or 'unknown'}")
+    console.print(f"[bold]Classification:[/bold] {unknown.classification or 'unknown'}")
+
+    if unknown.copyright_found:
+        console.print(f"\n[bold]Copyright:[/bold]")
+        console.print(f"  {unknown.copyright_found}")
+
+    if unknown.help_text:
+        console.print(f"\n[bold]Help Output:[/bold]")
+        for line in unknown.help_text.split('\n')[:5]:
+            console.print(f"  {line}")
+
+    if unknown.suggested_project:
+        console.print(f"\n[bold]Suggested Project:[/bold] {unknown.suggested_project}")
+
+    if unknown.user_notes:
+        console.print(f"\n[bold]Notes:[/bold] {unknown.user_notes}")
+
+
+@unknowns_app.command("classify")
+def unknowns_classify(
+    name: str = typer.Argument(..., help="Executable name"),
+    classification: str = typer.Argument(
+        ...,
+        help="Classification: user, system, third_party, ignored",
+    ),
+    project: str = typer.Option(
+        None,
+        "--project", "-p",
+        help="Suggested project ID (for third_party)",
+    ),
+    notes: str = typer.Option(
+        None,
+        "--notes", "-n",
+        help="User notes",
+    ),
+):
+    """Classify an unknown executable."""
+    from fundcli.local_db import LocalDatabase
+    from fundcli.unknowns import classify_executable
+
+    valid_classifications = ('user', 'system', 'third_party', 'ignored')
+    if classification not in valid_classifications:
+        console.print(f"[red]Invalid classification: {classification}[/red]")
+        console.print(f"Valid options: {', '.join(valid_classifications)}")
+        raise typer.Exit(1)
+
+    db = LocalDatabase()
+    unknown = classify_executable(name, classification, db, project, notes)
+
+    console.print(f"[green]✓[/green] Classified '{name}' as [yellow]{classification}[/yellow]")
+
+    if classification in ('user', 'system', 'ignored'):
+        console.print(f"  [dim]→ Will be excluded from donation calculations[/dim]")
+
+    if classification == 'third_party' and not project:
+        console.print(f"\n  [dim]Consider adding to projects.toml:[/dim]")
+        console.print(f"    [{name}]")
+        console.print(f'    name = "{name}"')
+        console.print(f'    executables = ["{name}"]')
+        console.print(f"    donation_urls = []")
+
+
+@unknowns_app.command("reset")
+def unknowns_reset(
+    force: bool = typer.Option(
+        False,
+        "--force", "-f",
+        help="Skip confirmation",
+    ),
+):
+    """Clear the local unknowns database."""
+    from fundcli.local_db import LocalDatabase, get_db_path
+
+    if not force:
+        confirm = typer.confirm("This will clear all cached investigations. Continue?")
+        if not confirm:
+            raise typer.Abort()
+
+    db = LocalDatabase()
+    count = db.clear_all()
+    console.print(f"[green]✓[/green] Cleared {count} records from {get_db_path()}")
+
+
 if __name__ == "__main__":
     app()
