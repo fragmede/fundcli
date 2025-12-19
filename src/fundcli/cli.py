@@ -148,7 +148,7 @@ def analyze(
             unknown_table.add_row(exe, str(count))
 
         console.print(unknown_table)
-        console.print("[dim]Consider contributing mappings for these executables![/dim]")
+        console.print("\n[dim]Run 'fundcli unknowns' to investigate and classify these executables.[/dim]")
 
 
 @app.command()
