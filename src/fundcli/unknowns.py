@@ -44,6 +44,38 @@ MACOS_BUILTINS = {
     'caffeinate', 'pmset', 'systemsetup', 'networksetup',
 }
 
+# Shell functions that are sourced, not executables
+# Maps function name to possible source script locations
+SHELL_FUNCTIONS = {
+    'nvm': [
+        '~/.nvm/nvm.sh',
+        '/opt/homebrew/opt/nvm/libexec/nvm.sh',
+        '/usr/local/opt/nvm/nvm.sh',
+    ],
+    'rvm': [
+        '~/.rvm/scripts/rvm',
+        '/usr/local/rvm/scripts/rvm',
+    ],
+    'pyenv': [
+        '~/.pyenv/bin/pyenv',  # pyenv can be both
+    ],
+    'rbenv': [
+        '~/.rbenv/bin/rbenv',
+    ],
+    'conda': [
+        '~/miniconda3/etc/profile.d/conda.sh',
+        '~/anaconda3/etc/profile.d/conda.sh',
+        '/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh',
+    ],
+    'sdk': [  # SDKMAN
+        '~/.sdkman/bin/sdkman-init.sh',
+    ],
+    'asdf': [
+        '~/.asdf/asdf.sh',
+        '/opt/homebrew/opt/asdf/libexec/asdf.sh',
+    ],
+}
+
 
 @dataclass
 class InvestigationResult:
@@ -60,6 +92,27 @@ class InvestigationResult:
 def which_executable(exe: str) -> str | None:
     """Find the path to an executable using shutil.which."""
     return shutil.which(exe)
+
+
+def find_shell_function_source(func_name: str) -> str | None:
+    """
+    Find the source script for a shell function.
+
+    Some tools like nvm, rvm, conda are shell functions sourced from scripts,
+    not executables. This checks known locations for these scripts.
+
+    Returns the path to the source script if found, None otherwise.
+    """
+    if func_name not in SHELL_FUNCTIONS:
+        return None
+
+    for path_pattern in SHELL_FUNCTIONS[func_name]:
+        path = Path(path_pattern).expanduser()
+        if path.exists():
+            # Resolve symlinks to find the real path
+            return str(path.resolve())
+
+    return None
 
 
 def get_file_type(path: str) -> str:
@@ -224,7 +277,12 @@ def investigate_executable(exe: str, db_path: Path | None = None) -> Investigati
     if path is None:
         is_typo = is_command_not_found(exe, db_path)
 
-    if path is None:
+    # Check for shell functions (nvm, rvm, conda, etc.)
+    shell_func_path = None
+    if path is None and not is_typo:
+        shell_func_path = find_shell_function_source(exe)
+
+    if path is None and shell_func_path is None:
         classification, reason = suggest_classification(
             exe, path, 'not_found', None, is_typo=is_typo
         )
@@ -236,6 +294,21 @@ def investigate_executable(exe: str, db_path: Path | None = None) -> Investigati
             help_text=None,
             suggested_classification=classification,
             suggestion_reason=reason,
+        )
+
+    # Use shell function source path if we found one
+    if shell_func_path:
+        path = shell_func_path
+        file_type = 'shell_function'
+        copyright_line = extract_copyright(path)
+        return InvestigationResult(
+            executable=exe,
+            path=path,
+            file_type=file_type,
+            copyright_line=copyright_line,
+            help_text=None,  # Shell functions don't have --help
+            suggested_classification='third_party',
+            suggestion_reason=f'shell function sourced from {path}',
         )
 
     file_type = get_file_type(path)
