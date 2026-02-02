@@ -14,6 +14,7 @@ from fundcli.analyzer import analyze_usage, get_top_executables, get_top_project
 from fundcli.calculator import calculate_distribution, WeightingStrategy, aggregate_by_donation_url
 from fundcli.config import load_config, get_default_config_content, get_config_path
 from fundcli.database import TimePeriod, get_history_stats
+from fundcli.aliases import build_alias_mappings
 from fundcli.mapper import create_mapper
 
 app = typer.Typer(
@@ -22,6 +23,21 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
+
+
+def _create_mapper(config) -> "ProjectMapper":
+    """Create a ProjectMapper with alias detection and custom mappings applied."""
+    mapper = create_mapper()
+
+    # Auto-detect shell aliases and map to projects
+    for alias_name, project_id in build_alias_mappings(mapper).items():
+        mapper.add_custom_mapping(alias_name, project_id)
+
+    # Manual overrides from config (highest priority, applied last)
+    for exe, project_id in config.custom_mappings.items():
+        mapper.add_custom_mapping(exe, project_id)
+
+    return mapper
 
 
 def version_callback(value: bool):
@@ -76,11 +92,7 @@ def analyze(
         console.print("Valid periods: day, week, month, year, all")
         raise typer.Exit(1)
 
-    mapper = create_mapper()
-
-    # Apply custom mappings from config
-    for exe, project_id in config.custom_mappings.items():
-        mapper.add_custom_mapping(exe, project_id)
+    mapper = _create_mapper(config)
 
     with console.status("Analyzing command history..."):
         analysis = analyze_usage(
@@ -247,11 +259,7 @@ def recommend(
         console.print("Valid strategies: count, duration, success, combined")
         raise typer.Exit(1)
 
-    mapper = create_mapper()
-
-    # Apply custom mappings
-    for exe, project_id in config.custom_mappings.items():
-        mapper.add_custom_mapping(exe, project_id)
+    mapper = _create_mapper(config)
 
     with console.status("Analyzing command history..."):
         analysis = analyze_usage(
@@ -527,11 +535,7 @@ def donate(
         console.print(f"[red]Invalid period: {period}[/red]")
         raise typer.Exit(1)
 
-    mapper = create_mapper()
-
-    # Apply custom mappings
-    for exe, project_id in config.custom_mappings.items():
-        mapper.add_custom_mapping(exe, project_id)
+    mapper = _create_mapper(config)
 
     with console.status("Analyzing command history..."):
         analysis = analyze_usage(
@@ -645,7 +649,7 @@ def unknowns_list(
         console.print(f"[red]Invalid period: {period}[/red]")
         raise typer.Exit(1)
 
-    mapper = create_mapper()
+    mapper = _create_mapper(config)
 
     # Get unknowns from analysis
     with console.status("Analyzing command history..."):
