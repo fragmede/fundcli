@@ -198,9 +198,52 @@ def normalize_executable(exe: str) -> str:
     return exe
 
 
+def _extract_wrappers_from_segment(segment: str) -> list[str]:
+    """Extract wrapper command names used in a segment.
+
+    Returns wrapper commands (e.g., sudo, doas) found before the
+    actual command. These are real tools that deserve credit too.
+    """
+    segment = segment.strip()
+    if not segment or segment.startswith("#"):
+        return []
+
+    # Strip leading variable assignments
+    while True:
+        match = re.match(r'^[A-Za-z_][A-Za-z0-9_]*=\S*\s*', segment)
+        if match:
+            segment = segment[match.end():].strip()
+        else:
+            break
+
+    if not segment:
+        return []
+
+    try:
+        tokens = shlex.split(segment)
+    except ValueError:
+        tokens = segment.split()
+
+    if not tokens:
+        return []
+
+    wrappers = []
+    for token in tokens:
+        if token in WRAPPER_COMMANDS:
+            wrappers.append(token)
+        elif token.startswith("-") or re.match(r'^[A-Za-z_][A-Za-z0-9_]*=', token):
+            continue
+        else:
+            break  # reached the actual command
+    return wrappers
+
+
 def extract_executables(command: str, include_builtins: bool = False) -> list[str]:
     """
     Extract all executable names from a command string.
+
+    Includes wrapper commands (sudo, etc.) alongside the wrapped command,
+    so both get credit as tools being used.
 
     Args:
         command: Full command string (may contain pipes, &&, etc.)
@@ -212,6 +255,14 @@ def extract_executables(command: str, include_builtins: bool = False) -> list[st
     executables = []
 
     for segment in split_command_segments(command):
+        # Include wrapper commands (e.g., sudo) as executables too
+        for wrapper in _extract_wrappers_from_segment(segment):
+            if not include_builtins and wrapper in SHELL_BUILTINS:
+                continue
+            if wrapper in CONTROL_KEYWORDS:
+                continue
+            executables.append(wrapper)
+
         exe = extract_executable(segment)
         if exe:
             # Skip builtins unless requested

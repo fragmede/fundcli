@@ -84,9 +84,13 @@ class TestExtractExecutables:
         result = extract_executables("make && make install")
         assert result == ["make", "make"]
 
+    def test_sudo_counted(self):
+        result = extract_executables("sudo apt install vim")
+        assert result == ["sudo", "apt"]
+
     def test_sudo_in_pipe(self):
         result = extract_executables("cat /etc/passwd | sudo tee /tmp/foo")
-        assert result == ["cat", "tee"]
+        assert result == ["cat", "sudo", "tee"]
 
     def test_builtins_excluded(self):
         result = extract_executables("cd /tmp && ls")

@@ -12,6 +12,19 @@
 # website = "https://..."  # Optional
 
 # ============================================================================
+# Privilege Escalation / System Administration
+# ============================================================================
+
+[sudo]
+name = "sudo"
+description = "Execute commands as another user"
+executables = ["sudo"]
+donation_urls = [
+    { platform = "direct", url = "https://www.sudo.ws/about/donations/" },
+]
+website = "https://www.sudo.ws"
+
+# ============================================================================
 # Core Unix Utilities
 # ============================================================================
 
