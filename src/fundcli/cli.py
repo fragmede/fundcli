@@ -11,7 +11,7 @@ from rich import box
 
 from fundcli import __version__
 from fundcli.analyzer import analyze_usage, get_top_executables, get_top_projects
-from fundcli.calculator import calculate_distribution, WeightingStrategy
+from fundcli.calculator import calculate_distribution, WeightingStrategy, aggregate_by_donation_url
 from fundcli.config import load_config, get_default_config_content, get_config_path
 from fundcli.database import TimePeriod, get_history_stats
 from fundcli.mapper import create_mapper
@@ -274,6 +274,9 @@ def recommend(
         max_projects=max_projects,
     )
 
+    # Aggregate by donation URL
+    aggregated = aggregate_by_donation_url(distribution.recommendations)
+
     # Output based on format
     if format == "json":
         import json
@@ -281,16 +284,15 @@ def recommend(
             "total_amount": str(distribution.total_amount),
             "period": period,
             "weighting": weight,
-            "recommendations": [
+            "donations": [
                 {
-                    "project": rec.project.name,
-                    "project_id": rec.project.id,
-                    "amount": str(rec.amount),
-                    "percentage": rec.percentage,
-                    "usage_count": rec.usage_count,
-                    "donation_url": rec.project.primary_donation_url,
+                    "donation_url": agg.url or None,
+                    "amount": str(agg.total_amount),
+                    "percentage": agg.total_percentage,
+                    "usage_count": agg.total_usage_count,
+                    "projects": [p.name for p in agg.projects],
                 }
-                for rec in distribution.recommendations
+                for agg in aggregated
             ],
         }
         console.print(json.dumps(output, indent=2))
@@ -300,12 +302,13 @@ def recommend(
         console.print(f"# Donation Recommendations (${amount:.2f})")
         console.print(f"\nBased on usage from {period_str} to {analysis.period_end:%Y-%m-%d}")
         console.print(f"({analysis.total_commands:,} commands analyzed)\n")
-        console.print("| Project | Amount | Usage | Donate At |")
-        console.print("|---------|--------|-------|-----------|")
-        for rec in distribution.recommendations:
-            url = rec.project.primary_donation_url or "N/A"
-            capped = "*" if rec.capped_at_minimum else ""
-            console.print(f"| {rec.project.name} | ${rec.amount}{capped} | {rec.percentage:.1f}% | {url} |")
+        console.print("| Projects | Amount | Usage | Donate At |")
+        console.print("|----------|--------|-------|-----------|")
+        for agg in aggregated:
+            url = agg.url or "N/A"
+            names = ", ".join(p.name for p in agg.projects)
+            capped = "*" if agg.any_capped_at_minimum else ""
+            console.print(f"| {names} | ${agg.total_amount}{capped} | {agg.total_percentage:.1f}% | {url} |")
         if any(r.capped_at_minimum for r in distribution.recommendations):
             console.print(f"\n*Minimum threshold (${min_amount:.2f}) applied")
 
@@ -321,21 +324,22 @@ def recommend(
         ))
 
         table = Table(box=box.SIMPLE)
-        table.add_column("Project", style="cyan")
+        table.add_column("Projects", style="cyan")
         table.add_column("Amount", justify="right", style="green")
         table.add_column("Usage", justify="right")
         table.add_column("Donate At", style="blue")
 
-        for rec in distribution.recommendations:
-            url = rec.project.primary_donation_url or "[dim]no link[/dim]"
-            amount_str = f"${rec.amount}"
-            if rec.capped_at_minimum:
+        for agg in aggregated:
+            url = agg.url or "[dim]no link[/dim]"
+            names = ", ".join(p.name for p in agg.projects)
+            amount_str = f"${agg.total_amount}"
+            if agg.any_capped_at_minimum:
                 amount_str += "*"
 
             table.add_row(
-                rec.project.name,
+                names,
                 amount_str,
-                f"{rec.percentage:.1f}%",
+                f"{agg.total_percentage:.1f}%",
                 url,
             )
 

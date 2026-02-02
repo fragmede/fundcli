@@ -17,7 +17,7 @@ from decimal import Decimal
 from urllib.parse import urlencode, quote
 from dataclasses import dataclass
 
-from fundcli.calculator import DistributionResult, DonationRecommendation
+from fundcli.calculator import DistributionResult, DonationRecommendation, aggregate_by_donation_url
 from fundcli.mapper import Project, DonationURL
 
 
@@ -108,7 +108,11 @@ def generate_donation_links(
     distribution: DistributionResult,
 ) -> list[DonationLink]:
     """
-    Generate donation links for all recommended projects.
+    Generate donation links for all recommended projects, aggregated by URL.
+
+    Projects sharing the same donation URL (e.g. GNU projects pointing to
+    https://my.fsf.org/donate) are combined into a single link with the
+    summed amount.
 
     Args:
         distribution: Distribution result from calculator
@@ -116,44 +120,44 @@ def generate_donation_links(
     Returns:
         List of DonationLink objects with pre-filled URLs where possible
     """
+    aggregated = aggregate_by_donation_url(distribution.recommendations)
     links = []
 
-    for rec in distribution.recommendations:
-        project = rec.project
-        amount = rec.amount
-
-        if not project.donation_urls:
+    for agg in aggregated:
+        if not agg.url:
             continue
 
-        # Use primary donation URL
-        donation_url = project.donation_urls[0]
+        # Use the first project's donation URL to determine platform
+        first_project = agg.projects[0]
+        donation_url = first_project.donation_urls[0]
         platform, identifier = extract_platform_info(donation_url)
 
+        names = ", ".join(p.name for p in agg.projects)
+
         if platform == "opencollective":
-            url = generate_opencollective_url(identifier, amount)
+            url = generate_opencollective_url(identifier, agg.total_amount)
             links.append(DonationLink(
-                project_name=project.name,
+                project_name=names,
                 platform="Open Collective",
                 url=url,
-                amount=amount,
+                amount=agg.total_amount,
                 is_prefilled=True,
             ))
         elif platform == "github_sponsors":
             url = generate_github_sponsors_url(identifier)
             links.append(DonationLink(
-                project_name=project.name,
+                project_name=names,
                 platform="GitHub Sponsors",
                 url=url,
-                amount=amount,
-                is_prefilled=False,  # GitHub doesn't support pre-fill
+                amount=agg.total_amount,
+                is_prefilled=False,
             ))
         else:
-            # Direct URL or unknown platform
             links.append(DonationLink(
-                project_name=project.name,
+                project_name=names,
                 platform="Direct",
                 url=donation_url.url,
-                amount=amount,
+                amount=agg.total_amount,
                 is_prefilled=False,
             ))
 

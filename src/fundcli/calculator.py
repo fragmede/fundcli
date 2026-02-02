@@ -83,6 +83,52 @@ def calculate_weight(
             return 0.5 * count_weight + 0.3 * duration_weight * count_weight + 0.2 * success_weight
 
 
+@dataclass
+class AggregatedRecommendation:
+    """Recommendations aggregated by donation URL."""
+    url: str
+    projects: list[Project]
+    total_amount: Decimal
+    total_percentage: float
+    total_usage_count: int
+    any_capped_at_minimum: bool
+
+
+def aggregate_by_donation_url(
+    recommendations: list[DonationRecommendation],
+) -> list[AggregatedRecommendation]:
+    """
+    Group recommendations by primary donation URL, summing amounts.
+
+    Projects sharing the same donation URL (e.g. GNU projects all pointing
+    to https://my.fsf.org/donate) get merged into a single entry with
+    the combined dollar amount.
+
+    Projects with no donation URL each get their own entry (url="").
+    """
+    from collections import OrderedDict
+
+    groups: OrderedDict[str, list[DonationRecommendation]] = OrderedDict()
+    for rec in recommendations:
+        url = rec.project.primary_donation_url or ""
+        groups.setdefault(url, []).append(rec)
+
+    result = []
+    for url, recs in groups.items():
+        result.append(AggregatedRecommendation(
+            url=url,
+            projects=[r.project for r in recs],
+            total_amount=sum((r.amount for r in recs), Decimal("0")),
+            total_percentage=sum(r.percentage for r in recs),
+            total_usage_count=sum(r.usage_count for r in recs),
+            any_capped_at_minimum=any(r.capped_at_minimum for r in recs),
+        ))
+
+    # Sort by amount descending
+    result.sort(key=lambda a: a.total_amount, reverse=True)
+    return result
+
+
 def calculate_distribution(
     analysis: UsageAnalysis,
     total_amount: Decimal,
