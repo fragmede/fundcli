@@ -10,9 +10,9 @@ from rich.panel import Panel
 from rich import box
 
 from fundcli import __version__
-from fundcli.analyzer import analyze_usage, get_top_executables, get_top_projects
-from fundcli.calculator import calculate_distribution, WeightingStrategy, aggregate_by_donation_url
-from fundcli.config import load_config, get_default_config_content, get_config_path
+from fundcli.analyzer import analyze_usage, get_top_executables
+from fundcli.calculator import calculate_distribution, WeightingStrategy
+from fundcli.config import load_config, get_default_config_content, get_config_path, Config
 from fundcli.database import TimePeriod, get_history_stats
 from fundcli.aliases import build_alias_mappings
 from fundcli.mapper import create_mapper
@@ -38,6 +38,36 @@ def _create_mapper(config) -> "ProjectMapper":
         mapper.add_custom_mapping(exe, project_id)
 
     return mapper
+
+
+def _parse_period(period: str) -> TimePeriod:
+    """Parse a period string into a TimePeriod, or exit with error."""
+    try:
+        return TimePeriod(period)
+    except ValueError:
+        console.print(f"[red]Invalid period: {period}[/red]")
+        console.print("Valid periods: day, week, month, year, all")
+        raise typer.Exit(1)
+
+
+def _run_analysis(
+    config: Config,
+    time_period: TimePeriod,
+    hostname: str | None = None,
+) -> tuple:
+    """Run the standard analysis pipeline: create mapper, analyze usage.
+
+    Returns (mapper, analysis) tuple.
+    """
+    mapper = _create_mapper(config)
+    with console.status("Analyzing command history..."):
+        return mapper, analyze_usage(
+            mapper=mapper,
+            period=time_period,
+            hostname=hostname,
+            include_builtins=config.analysis.include_builtins,
+            db_path=config.database.path if config.database.path.exists() else None,
+        )
 
 
 def version_callback(value: bool):
@@ -84,24 +114,8 @@ def analyze(
 ):
     """Analyze command usage patterns."""
     config = load_config()
-
-    try:
-        time_period = TimePeriod(period)
-    except ValueError:
-        console.print(f"[red]Invalid period: {period}[/red]")
-        console.print("Valid periods: day, week, month, year, all")
-        raise typer.Exit(1)
-
-    mapper = _create_mapper(config)
-
-    with console.status("Analyzing command history..."):
-        analysis = analyze_usage(
-            mapper=mapper,
-            period=time_period,
-            hostname=hostname,
-            include_builtins=config.analysis.include_builtins,
-            db_path=config.database.path if config.database.path.exists() else None,
-        )
+    time_period = _parse_period(period)
+    mapper, analysis = _run_analysis(config, time_period, hostname)
 
     # Header
     period_str = f"{analysis.period_start:%Y-%m-%d}" if analysis.period_start else "beginning"
@@ -242,15 +256,26 @@ def recommend(
         "--hostname", "-H",
         help="Filter by hostname",
     ),
+    output_file: str = typer.Option(
+        None,
+        "--output", "-o",
+        help="Export report to file (html or md extension)",
+    ),
+    open_links: bool = typer.Option(
+        False,
+        "--open",
+        help="Open donation links in browser",
+    ),
 ):
-    """Generate donation recommendations based on usage."""
-    config = load_config()
+    """Recommend donations and generate links based on usage."""
+    from fundcli.integrations import (
+        generate_donation_links,
+        generate_markdown_report,
+        generate_html_report,
+    )
 
-    try:
-        time_period = TimePeriod(period)
-    except ValueError:
-        console.print(f"[red]Invalid period: {period}[/red]")
-        raise typer.Exit(1)
+    config = load_config()
+    time_period = _parse_period(period)
 
     try:
         strategy = WeightingStrategy(weight)
@@ -259,16 +284,7 @@ def recommend(
         console.print("Valid strategies: count, duration, success, combined")
         raise typer.Exit(1)
 
-    mapper = _create_mapper(config)
-
-    with console.status("Analyzing command history..."):
-        analysis = analyze_usage(
-            mapper=mapper,
-            period=time_period,
-            hostname=hostname,
-            include_builtins=config.analysis.include_builtins,
-            db_path=config.database.path if config.database.path.exists() else None,
-        )
+    mapper, analysis = _run_analysis(config, time_period, hostname)
 
     if not analysis.project_stats:
         console.print("[yellow]No known projects found in command history.[/yellow]")
@@ -282,10 +298,18 @@ def recommend(
         max_projects=max_projects,
     )
 
-    # Aggregate by donation URL
-    aggregated = aggregate_by_donation_url(distribution.recommendations)
+    links = generate_donation_links(distribution)
 
-    # Output based on format
+    # Export to file if requested
+    if output_file:
+        if output_file.endswith(".html"):
+            content = generate_html_report(distribution)
+        else:
+            content = generate_markdown_report(distribution)
+        Path(output_file).write_text(content)
+        console.print(f"[green]Report saved to {output_file}[/green]")
+
+    # Render output
     if format == "json":
         import json
         output = {
@@ -294,31 +318,19 @@ def recommend(
             "weighting": weight,
             "donations": [
                 {
-                    "donation_url": agg.url or None,
-                    "amount": str(agg.total_amount),
-                    "percentage": agg.total_percentage,
-                    "usage_count": agg.total_usage_count,
-                    "projects": [p.name for p in agg.projects],
+                    "project": link.project_name,
+                    "amount": str(link.amount),
+                    "platform": link.platform,
+                    "url": link.url,
+                    "prefilled": link.is_prefilled,
                 }
-                for agg in aggregated
+                for link in links
             ],
         }
         console.print(json.dumps(output, indent=2))
 
     elif format == "markdown":
-        period_str = f"{analysis.period_start:%Y-%m-%d}" if analysis.period_start else "beginning"
-        console.print(f"# Donation Recommendations (${amount:.2f})")
-        console.print(f"\nBased on usage from {period_str} to {analysis.period_end:%Y-%m-%d}")
-        console.print(f"({analysis.total_commands:,} commands analyzed)\n")
-        console.print("| Projects | Amount | Usage | Donate At |")
-        console.print("|----------|--------|-------|-----------|")
-        for agg in aggregated:
-            url = agg.url or "N/A"
-            names = ", ".join(p.name for p in agg.projects)
-            capped = "*" if agg.any_capped_at_minimum else ""
-            console.print(f"| {names} | ${agg.total_amount}{capped} | {agg.total_percentage:.1f}% | {url} |")
-        if any(r.capped_at_minimum for r in distribution.recommendations):
-            console.print(f"\n*Minimum threshold (${min_amount:.2f}) applied")
+        console.print(generate_markdown_report(distribution))
 
     else:  # table
         period_str = f"{analysis.period_start:%Y-%m-%d}" if analysis.period_start else "beginning"
@@ -332,36 +344,34 @@ def recommend(
         ))
 
         table = Table(box=box.SIMPLE)
-        table.add_column("Projects", style="cyan")
+        table.add_column("Project", style="cyan")
         table.add_column("Amount", justify="right", style="green")
-        table.add_column("Usage", justify="right")
-        table.add_column("Donate At", style="blue")
+        table.add_column("Platform")
+        table.add_column("Link", style="blue")
 
-        for agg in aggregated:
-            url = agg.url or "[dim]no link[/dim]"
-            names = ", ".join(p.name for p in agg.projects)
-            amount_str = f"${agg.total_amount}"
-            if agg.any_capped_at_minimum:
-                amount_str += "*"
-
+        for link in links:
+            prefill = " ✓" if link.is_prefilled else ""
             table.add_row(
-                names,
-                amount_str,
-                f"{agg.total_percentage:.1f}%",
-                url,
+                link.project_name,
+                f"${link.amount}",
+                f"{link.platform}{prefill}",
+                link.url,
             )
 
         console.print(table)
-
-        if any(r.capped_at_minimum for r in distribution.recommendations):
-            console.print(f"\n[dim]* Minimum threshold (${min_amount:.2f}) applied[/dim]")
-
         console.print(f"\n[bold]Total: ${distribution.allocated_amount}[/bold]")
+        console.print("[dim]✓ = amount pre-filled in donation form[/dim]")
 
-        # Show unknown executables hint
         if analysis.unknown_executables:
             console.print(f"\n[dim]{len(analysis.unknown_executables)} unknown executables not included.[/dim]")
             console.print("[dim]Run 'fundcli analyze' to see them.[/dim]")
+
+    # Open links in browser if requested
+    if open_links:
+        import webbrowser
+        console.print("\n[dim]Opening donation links in browser...[/dim]")
+        for link in links:
+            webbrowser.open(link.url)
 
 
 @app.command()
@@ -486,126 +496,6 @@ def stats():
     ))
 
 
-@app.command()
-def donate(
-    amount: float = typer.Option(
-        ...,
-        "--amount", "-a",
-        help="Total donation amount in USD",
-    ),
-    period: str = typer.Option(
-        "month",
-        "--period", "-p",
-        help="Time period: day, week, month, year, all",
-    ),
-    max_projects: int = typer.Option(
-        10,
-        "--max-projects", "-n",
-        help="Maximum number of projects",
-    ),
-    output_file: str = typer.Option(
-        None,
-        "--output", "-o",
-        help="Output file for report (html or md extension)",
-    ),
-    open_links: bool = typer.Option(
-        False,
-        "--open",
-        help="Open donation links in browser",
-    ),
-    hostname: str = typer.Option(
-        None,
-        "--hostname", "-H",
-        help="Filter by hostname",
-    ),
-):
-    """Generate donation links and reports."""
-    from fundcli.integrations import (
-        generate_donation_links,
-        generate_markdown_report,
-        generate_html_report,
-    )
-    import webbrowser
-
-    config = load_config()
-
-    try:
-        time_period = TimePeriod(period)
-    except ValueError:
-        console.print(f"[red]Invalid period: {period}[/red]")
-        raise typer.Exit(1)
-
-    mapper = _create_mapper(config)
-
-    with console.status("Analyzing command history..."):
-        analysis = analyze_usage(
-            mapper=mapper,
-            period=time_period,
-            hostname=hostname,
-            include_builtins=config.analysis.include_builtins,
-            db_path=config.database.path if config.database.path.exists() else None,
-        )
-
-    if not analysis.project_stats:
-        console.print("[yellow]No known projects found in command history.[/yellow]")
-        raise typer.Exit(0)
-
-    distribution = calculate_distribution(
-        analysis=analysis,
-        total_amount=Decimal(str(amount)),
-        min_amount=Decimal(str(config.donation.min_per_project)),
-        max_projects=max_projects,
-    )
-
-    # Generate links
-    links = generate_donation_links(distribution)
-
-    if not links:
-        console.print("[yellow]No donation links available for recommended projects.[/yellow]")
-        raise typer.Exit(0)
-
-    # Output to file if requested
-    if output_file:
-        if output_file.endswith(".html"):
-            content = generate_html_report(distribution)
-        else:
-            content = generate_markdown_report(distribution)
-
-        Path(output_file).write_text(content)
-        console.print(f"[green]Report saved to {output_file}[/green]")
-
-    # Display links
-    console.print(Panel(
-        f"[bold]Donation Links[/bold] (${amount:.2f} total)\n"
-        f"Click links to donate. ✓ = amount pre-filled",
-        title="fundcli donate",
-        box=box.ROUNDED,
-    ))
-
-    table = Table(box=box.SIMPLE)
-    table.add_column("Project", style="cyan")
-    table.add_column("Amount", justify="right", style="green")
-    table.add_column("Platform")
-    table.add_column("Link", style="blue")
-
-    for link in links:
-        prefill = " ✓" if link.is_prefilled else ""
-        table.add_row(
-            link.project_name,
-            f"${link.amount}",
-            f"{link.platform}{prefill}",
-            link.url,
-        )
-
-    console.print(table)
-
-    # Open links in browser if requested
-    if open_links:
-        console.print("\n[dim]Opening donation links in browser...[/dim]")
-        for link in links:
-            webbrowser.open(link.url)
-
-
 # Unknowns subcommand group
 unknowns_app = typer.Typer(
     name="unknowns",
@@ -643,22 +533,8 @@ def unknowns_list(
     if first_run:
         console.print(f"[dim]Created local database at {get_db_path()}[/dim]\n")
 
-    try:
-        time_period = TimePeriod(period)
-    except ValueError:
-        console.print(f"[red]Invalid period: {period}[/red]")
-        raise typer.Exit(1)
-
-    mapper = _create_mapper(config)
-
-    # Get unknowns from analysis
-    with console.status("Analyzing command history..."):
-        analysis = analyze_usage(
-            mapper=mapper,
-            period=time_period,
-            include_builtins=config.analysis.include_builtins,
-            db_path=config.database.path if config.database.path.exists() else None,
-        )
+    time_period = _parse_period(period)
+    _, analysis = _run_analysis(config, time_period)
 
     if not analysis.unknown_executables:
         console.print("[green]No unknown executables found![/green]")
