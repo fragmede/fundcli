@@ -220,7 +220,7 @@ def analyze(
 
 
 @app.command()
-def recommend(
+def donate(
     amount: float = typer.Option(
         ...,
         "--amount", "-a",
@@ -339,7 +339,7 @@ def recommend(
             f"Period: {period_str} to {analysis.period_end:%Y-%m-%d}\n"
             f"Commands analyzed: {analysis.total_commands:,}\n"
             f"Weighting: {weight}",
-            title="fundcli recommend",
+            title="fundcli donate",
             box=box.ROUNDED,
         ))
 
